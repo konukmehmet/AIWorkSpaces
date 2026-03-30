@@ -106,6 +106,31 @@ class Arrow {
   }
 }
 
+// --- Spit Projectile ---
+const spits = [];
+class Spit {
+  constructor(position, scale) {
+    this.group = new THREE.Group();
+    const spitGeo = new THREE.SphereGeometry(0.15 * scale, 8, 8);
+    const spitMat = new THREE.MeshBasicMaterial({ color: 0x55aa00 }); // Slime green
+    const spitMesh = new THREE.Mesh(spitGeo, spitMat);
+    this.group.add(spitMesh);
+    this.group.position.copy(position);
+    scene.add(this.group);
+    this.box = new THREE.Box3();
+  }
+  update() {
+    this.group.position.x += 0.4; // Moves straight and fast
+    this.group.updateMatrixWorld();
+    this.box.setFromObject(this.group);
+    if (this.group.position.x > 30) {
+      scene.remove(this.group);
+      return false;
+    }
+    return true;
+  }
+}
+
 // --- Archer Enemy Class ---
 class Enemy {
   constructor(parentPosition, heightOffset) {
@@ -339,6 +364,17 @@ class OttomanBird {
     this.velocity = 0;
     this.isSwinging = false;
     this.currentScale = 1.0;
+    this.lastSpitTime = 0;
+  }
+
+  spit() {
+    if (Date.now() - this.lastSpitTime < 500) return; // Cooldown 0.5s
+    this.lastSpitTime = Date.now();
+    const spitPos = new THREE.Vector3();
+    this.horseGroup.getWorldPosition(spitPos);
+    spitPos.y += 0.8; // Horse head height
+    spitPos.x += 1.0; // Slightly forward
+    spits.push(new Spit(spitPos, this.currentScale));
   }
 
   updateScale(score) {
@@ -380,6 +416,7 @@ class OttomanBird {
     this.group.rotation.set(0, 0, 0);
     this.velocity = 0;
     this.isSwinging = false;
+    this.lastSpitTime = 0;
     this.updateScale(0);
     this.group.updateMatrixWorld();
   }
@@ -534,6 +571,56 @@ function updateLevel() {
     }
   }
 
+  // Update Spits & Collision
+  for (let i = spits.length - 1; i >= 0; i--) {
+    const spit = spits[i];
+    if (!spit.update()) {
+      spits.splice(i, 1);
+      continue;
+    }
+
+    let spitDestroyed = false;
+
+    // Spit vs Enemy
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      const enemy = enemies[j];
+      if (!enemy.isDead) {
+        const enemyBox = new THREE.Box3().setFromObject(enemy.group);
+        if (spit.box.intersectsBox(enemyBox)) {
+          enemy.die();
+          score += 2;
+          updateHUD();
+          spitDestroyed = true;
+          break;
+        }
+      }
+    }
+
+    if (spitDestroyed) {
+      scene.remove(spit.group);
+      spits.splice(i, 1);
+      continue;
+    }
+
+    // Spit vs Arrows
+    for (let k = arrows.length - 1; k >= 0; k--) {
+      const arrow = arrows[k];
+      if (spit.box.intersectsBox(arrow.box)) {
+        // Destroy both
+        for (let p = 0; p < 3; p++) particles.push(new SparkParticle(arrow.group.position, 0x55aa00));
+        scene.remove(arrow.group);
+        arrows.splice(k, 1);
+        spitDestroyed = true;
+        break;
+      }
+    }
+
+    if (spitDestroyed) {
+      scene.remove(spit.group);
+      spits.splice(i, 1);
+    }
+  }
+
   // Update Particles
   for (let i = particles.length - 1; i >= 0; i--) {
     if (!particles[i].update()) {
@@ -574,6 +661,8 @@ function startGame() {
   enemies.length = 0;
   arrows.forEach(a => scene.remove(a.group));
   arrows.length = 0;
+  spits.forEach(s => scene.remove(s.group));
+  spits.length = 0;
   lastPipeSpawnTime = Date.now();
 }
 
@@ -611,13 +700,21 @@ const handleAttack = (e) => {
   if (currentGameState === GameState.PLAYING) bird.swing();
 };
 
+const handleSpit = (e) => {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  if (currentGameState === GameState.PLAYING) bird.spit();
+};
+
 jumpBtn.addEventListener('pointerdown', handleJump);
 attackBtn.addEventListener('pointerdown', handleAttack);
+const spitBtn = document.getElementById('spit-btn');
+if (spitBtn) spitBtn.addEventListener('pointerdown', handleSpit);
 
 window.addEventListener('keydown', (e) => {
   if (currentGameState !== GameState.PLAYING) return;
   if (e.code === 'Space') bird.swing();
   if (e.code === 'KeyW' || e.code === 'ArrowUp') bird.jump();
+  if (e.code === 'KeyE' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') bird.spit();
 });
 
 renderer.domElement.addEventListener('pointerdown', () => {

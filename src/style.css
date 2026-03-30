@@ -195,6 +195,14 @@ canvas {
   padding: 0 2rem;
   pointer-events: none;
   z-index: 20;
+  align-items: flex-end; /* Align bottom */
+}
+
+.combo-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
 }
 
 .control-btn {
@@ -228,6 +236,12 @@ canvas {
 
 .control-btn.right {
   background: linear-gradient(135deg, rgba(139, 0, 0, 0.5) 0%, rgba(178, 34, 34, 0.5) 100%);
+}
+
+.control-btn.spit {
+  background: linear-gradient(135deg, rgba(85, 170, 0, 0.5) 0%, rgba(34, 139, 34, 0.5) 100%); /* Toxic green */
+  width: 75px; /* Slightly smaller than attack */
+  height: 75px;
 }
 
 .control-btn:active {
