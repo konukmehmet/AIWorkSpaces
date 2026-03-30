@@ -291,11 +291,39 @@ class OttomanBird {
     this.leftWing.position.set(-0.1, 0, 0.35);
     this.riderGroup.add(this.leftWing);
 
-    this.rightWing = new THREE.Mesh(wingGeo, wingMat);
-    this.rightWing.position.set(-0.1, 0, -0.35);
-    this.riderGroup.add(this.rightWing);
-
     this.riderGroup.position.y = 0.4;
+
+    // --- Turkish Flag (Türk Bayrağı) ---
+    const flagPoleGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.2);
+    const flagPoleMat = new THREE.MeshStandardMaterial({ color: 0x442200 });
+    const flagPole = new THREE.Mesh(flagPoleGeo, flagPoleMat);
+    
+    const flagClothGeo = new THREE.BoxGeometry(0.6, 0.4, 0.02);
+    const flagClothMat = new THREE.MeshStandardMaterial({ color: 0xff0000 }); // Red
+    const flagCloth = new THREE.Mesh(flagClothGeo, flagClothMat);
+    flagCloth.position.set(0.3, 0.35, 0);
+    
+    const crescentGeo = new THREE.TorusGeometry(0.08, 0.02, 8, 16, Math.PI * 1.2);
+    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const crescent = new THREE.Mesh(crescentGeo, whiteMat);
+    crescent.position.set(0.2, 0.35, 0.02);
+    crescent.rotation.z = -Math.PI / 4;
+    
+    const starGeo = new THREE.SphereGeometry(0.03, 8, 8);
+    const star = new THREE.Mesh(starGeo, whiteMat);
+    star.position.set(0.35, 0.35, 0.02);
+
+    this.flagGroup = new THREE.Group();
+    this.flagGroup.add(flagPole);
+    this.flagGroup.add(flagCloth);
+    this.flagGroup.add(crescent);
+    this.flagGroup.add(star);
+    
+    // Position on the other hand (Left)
+    this.flagGroup.position.set(0.2, 0.3, -0.4);
+    this.flagGroup.rotation.x = -0.2; // Slight tilt
+    this.riderGroup.add(this.flagGroup);
+
     this.group.add(this.riderGroup);
 
     this.group.position.set(BIRD_X, 3, 0);
