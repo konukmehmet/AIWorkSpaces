@@ -451,6 +451,9 @@ function updateLevel() {
 const menuScreen = document.getElementById('menu-screen');
 const gameOverScreen = document.getElementById('game-over-screen');
 const hudScore = document.getElementById('hud-score');
+const mobileControls = document.getElementById('mobile-controls');
+const jumpBtn = document.getElementById('jump-btn');
+const attackBtn = document.getElementById('attack-btn');
 const finalScoreText = document.getElementById('final-score');
 const highScoreText = document.getElementById('high-score');
 const startBtn = document.getElementById('start-btn');
@@ -463,6 +466,7 @@ function startGame() {
   menuScreen.classList.add('hidden');
   gameOverScreen.classList.add('hidden');
   hudScore.classList.remove('hidden');
+  mobileControls.classList.remove('hidden');
   bird.reset();
   pipes.forEach(p => scene.remove(p));
   pipes.length = 0;
@@ -482,6 +486,7 @@ function endGame(reason) {
   finalScoreText.textContent = score;
   highScoreText.textContent = highScore;
   hudScore.classList.add('hidden');
+  mobileControls.classList.add('hidden');
   gameOverScreen.classList.remove('hidden');
 }
 
@@ -492,20 +497,29 @@ function updateHUD() {
 startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
 restartBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
 
+// Controls Event Listeners
+const handleJump = (e) => {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  if (currentGameState === GameState.PLAYING) bird.jump();
+};
+
+const handleAttack = (e) => {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  if (currentGameState === GameState.PLAYING) bird.swing();
+};
+
+jumpBtn.addEventListener('pointerdown', handleJump);
+attackBtn.addEventListener('pointerdown', handleAttack);
+
 window.addEventListener('keydown', (e) => {
   if (currentGameState !== GameState.PLAYING) return;
   if (e.code === 'Space') bird.swing();
   if (e.code === 'KeyW' || e.code === 'ArrowUp') bird.jump();
 });
 
-renderer.domElement.addEventListener('mousedown', () => {
+renderer.domElement.addEventListener('pointerdown', () => {
   if (currentGameState === GameState.PLAYING) bird.jump();
 });
-
-renderer.domElement.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  if (currentGameState === GameState.PLAYING) bird.jump();
-}, { passive: false });
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;

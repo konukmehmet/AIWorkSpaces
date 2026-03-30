@@ -180,3 +180,65 @@ canvas {
   .overlay { padding: 2rem; width: 85%; }
   #hud-score { font-size: 3.5rem; }
 }
+
+/* Mobile Controls */
+#mobile-controls {
+  position: absolute;
+  bottom: 3rem;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2rem;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.control-btn {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 2px solid rgba(212, 175, 55, 0.6);
+  background: rgba(46, 26, 26, 0.3);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, background 0.2s ease, border-color 0.2s ease;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.control-btn.left {
+  background: linear-gradient(135deg, rgba(0, 163, 163, 0.5) 0%, rgba(0, 80, 80, 0.5) 100%);
+}
+
+.control-btn.right {
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.5) 0%, rgba(178, 34, 34, 0.5) 100%);
+}
+
+.control-btn:active {
+  transform: scale(0.9);
+  background: rgba(212, 175, 55, 0.5);
+  border-color: #d4af37;
+}
+
+@media (max-width: 600px) {
+  .control-btn {
+    width: 85px;
+    height: 85px;
+    font-size: 0.9rem;
+  }
+  #mobile-controls {
+    bottom: 2rem;
+    padding: 0 1.5rem;
+  }
+}
