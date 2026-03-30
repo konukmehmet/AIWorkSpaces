@@ -8,7 +8,7 @@ const JUMP_STRENGTH = 0.18;
 const PIPE_SPEED = 0.12;
 const PIPE_SPAWN_INTERVAL = 1400; // ms
 const PIPE_GAP = 9.0; // Slightly larger for combat room
-const BIRD_X = -2; // Moved forward from -5 for better visibility
+const BIRD_X = -3.5; // Balanced middle-ground for mobile visibility
 
 // --- Game State ---
 const GameState = {
