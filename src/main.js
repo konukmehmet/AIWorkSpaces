@@ -43,57 +43,74 @@ const sunLight = new THREE.DirectionalLight(0xffaa00, 1.5);
 sunLight.position.set(10, 10, -10);
 scene.add(sunLight);
 
-// --- Particle System (Musical Notes) ---
+// --- Particle System (Sparks/Debris) ---
 const particles = [];
-class NoteParticle {
-  constructor(position) {
-    const geo = new THREE.BoxGeometry(0.1, 0.2, 0.05);
-    const colors = [0xff4d4d, 0xffcc00, 0x00a3a3, 0xff00ff, 0x00ff00];
-    const mat = new THREE.MeshBasicMaterial({ color: colors[Math.floor(Math.random() * colors.length)] });
+class SparkParticle {
+  constructor(position, color = 0xffcc00) {
+    const geo = new THREE.SphereGeometry(0.05, 4, 4);
+    const mat = new THREE.MeshBasicMaterial({ color });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.position.copy(position);
-    
-    this.velocity = new THREE.Vector3(
-      (Math.random() - 0.5) * 0.3,
-      Math.random() * 0.3,
-      (Math.random() - 0.5) * 0.3
-    );
-    this.gravity = -0.005;
+    this.velocity = new THREE.Vector3((Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4);
     this.life = 1.0;
-    this.rotationVel = (Math.random() - 0.5) * 0.2;
     scene.add(this.mesh);
   }
-
   update() {
-    this.velocity.y += this.gravity;
     this.mesh.position.add(this.velocity);
-    this.mesh.rotation.z += this.rotationVel;
-    this.life -= 0.02;
+    this.life -= 0.04;
     this.mesh.scale.setScalar(this.life);
-    if (this.life <= 0) {
-      scene.remove(this.mesh);
+    if (this.life <= 0) { scene.remove(this.mesh); return false; }
+    return true;
+  }
+}
+
+// --- Arrow Projectile ---
+const arrows = [];
+class Arrow {
+  constructor(position) {
+    this.group = new THREE.Group();
+    const shaftGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.8);
+    const shaftMat = new THREE.MeshStandardMaterial({ color: 0x5c4033 });
+    const shaft = new THREE.Mesh(shaftGeo, shaftMat);
+    shaft.rotation.z = Math.PI / 2;
+    this.group.add(shaft);
+
+    const tipGeo = new THREE.ConeGeometry(0.05, 0.15, 8);
+    const tipMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.9 });
+    const tip = new THREE.Mesh(tipGeo, tipMat);
+    tip.position.x = -0.4;
+    tip.rotation.z = Math.PI / 2;
+    this.group.add(tip);
+
+    this.group.position.copy(position);
+    scene.add(this.group);
+    this.box = new THREE.Box3();
+    this.isDeflected = false;
+  }
+  update() {
+    this.group.position.x -= 0.25; // Faster than pipes
+    this.group.updateMatrixWorld();
+    this.box.setFromObject(this.group);
+    if (this.group.position.x < -30) {
+      scene.remove(this.group);
       return false;
     }
     return true;
   }
 }
 
-// --- Musician Enemy Class ---
+// --- Archer Enemy Class ---
 class Enemy {
   constructor(parentPosition, heightOffset) {
     this.group = new THREE.Group();
-    
-    const types = ['SINGER', 'GUITARIST', 'DRUMMER', 'VIOLINIST'];
-    this.type = types[Math.floor(Math.random() * types.length)];
+    this.shootTimer = Math.random() * 50; // Randomize initial shot
 
-    // Body (Performers have more colorful outfits)
+    // Body
     const bodyGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8);
-    const outfits = [0x552277, 0x2244aa, 0xaa2222, 0x111111];
-    const bodyMat = new THREE.MeshStandardMaterial({ color: outfits[Math.floor(Math.random() * outfits.length)] });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2244aa }); // Janissary Blue
     this.body = new THREE.Mesh(bodyGeo, bodyMat);
     this.group.add(this.body);
 
-    // Head with Fes (Keep the Ottoman theme)
     const headGeo = new THREE.SphereGeometry(0.3, 8, 8);
     const headMat = new THREE.MeshStandardMaterial({ color: 0xeebb99 });
     const head = new THREE.Mesh(headGeo, headMat);
@@ -106,75 +123,35 @@ class Enemy {
     fes.position.y = 1.0;
     this.group.add(fes);
 
-    // --- Instruments ---
-    this.instrumentGroup = new THREE.Group();
-    const instMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.1 });
-
-    if (this.type === 'SINGER') {
-      // Microphone stand
-      const standGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.5);
-      const stand = new THREE.Mesh(standGeo, instMat);
-      stand.position.set(0.4, 0, 0);
-      this.instrumentGroup.add(stand);
-      const micGeo = new THREE.SphereGeometry(0.1, 8, 8);
-      const mic = new THREE.Mesh(micGeo, new THREE.MeshStandardMaterial({ color: 0x333333 }));
-      mic.position.set(0.4, 0.75, 0);
-      this.instrumentGroup.add(mic);
-    } else if (this.type === 'GUITARIST') {
-      const gBodyGeo = new THREE.BoxGeometry(0.4, 0.6, 0.15);
-      const gBody = new THREE.Mesh(gBodyGeo, instMat);
-      const gNeckGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.8);
-      const gNeck = new THREE.Mesh(gNeckGeo, instMat);
-      gNeck.position.y = 0.5;
-      const gGroup = new THREE.Group();
-      gGroup.add(gBody); gGroup.add(gNeck);
-      gGroup.position.set(0.5, 0, 0);
-      gGroup.rotation.z = Math.PI / 4;
-      this.instrumentGroup.add(gGroup);
-    } else if (this.type === 'DRUMMER') {
-      const drumGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.6, 16);
-      const drum = new THREE.Mesh(drumGeo, instMat);
-      drum.position.set(0.6, -0.3, 0);
-      drum.rotation.x = Math.PI / 2;
-      this.instrumentGroup.add(drum);
-      // Sticks
-      const stickGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.6);
-      const s1 = new THREE.Mesh(stickGeo, new THREE.MeshStandardMaterial({ color: 0xffffff }));
-      s1.position.set(0.3, 0.2, 0.2); s1.rotation.z = -Math.PI / 4;
-      const s2 = new THREE.Mesh(stickGeo, new THREE.MeshStandardMaterial({ color: 0xffffff }));
-      s2.position.set(0.3, 0.2, -0.2); s2.rotation.z = -Math.PI / 4;
-      this.instrumentGroup.add(s1); this.instrumentGroup.add(s2);
-    } else if (this.type === 'VIOLINIST') {
-      const vBodyGeo = new THREE.BoxGeometry(0.2, 0.4, 0.1);
-      const vBody = new THREE.Mesh(vBodyGeo, instMat);
-      vBody.position.set(0.4, 0.4, 0.2);
-      vBody.rotation.z = Math.PI / 2;
-      this.instrumentGroup.add(vBody);
-      const bowGeo = new THREE.CylinderGeometry(0.01, 0.01, 0.8);
-      const bow = new THREE.Mesh(bowGeo, new THREE.MeshStandardMaterial({ color: 0xffffff }));
-      bow.position.set(0.4, 0.5, 0);
-      bow.rotation.x = Math.PI / 2;
-      this.instrumentGroup.add(bow);
-    }
-
-    this.group.add(this.instrumentGroup);
+    // Bow (Yay)
+    const bowMesh = new THREE.Mesh(
+      new THREE.TorusGeometry(0.4, 0.03, 8, 16, Math.PI),
+      new THREE.MeshStandardMaterial({ color: 0x5c4033 })
+    );
+    bowMesh.position.set(0.4, 0.1, 0);
+    bowMesh.rotation.z = -Math.PI / 2;
+    this.group.add(bowMesh);
 
     this.group.position.set(22, heightOffset, 0);
     scene.add(this.group);
-    
     this.isDead = false;
   }
 
   die() {
     this.isDead = true;
-    for (let i = 0; i < 20; i++) {
-      particles.push(new NoteParticle(this.group.position));
+    for (let i = 0; i < 15; i++) {
+      particles.push(new SparkParticle(this.group.position, 0x990000));
     }
     scene.remove(this.group);
   }
 
   update(speed) {
     this.group.position.x -= speed;
+    this.shootTimer++;
+    if (this.shootTimer > 100 && !this.isDead) { // Shoot every ~1.6s
+      arrows.push(new Arrow(this.group.position.clone()));
+      this.shootTimer = 0;
+    }
   }
 }
 
@@ -486,6 +463,30 @@ function updateLevel() {
     }
   }
 
+  // Update Arrows & Collision
+  for (let i = arrows.length - 1; i >= 0; i--) {
+    const arrow = arrows[i];
+    if (!arrow.update()) {
+      arrows.splice(i, 1);
+      continue;
+    }
+
+    // Arrow vs Player
+    if (birdBodyBox.intersectsBox(arrow.box)) {
+      endGame("Arrow Hit");
+    }
+
+    // Arrow vs Spear (Deflection)
+    if (bird.isSwinging && birdSwordBox.intersectsBox(arrow.box)) {
+      // Deflect!
+      for (let j = 0; j < 5; j++) {
+        particles.push(new SparkParticle(arrow.group.position, 0xffffff));
+      }
+      scene.remove(arrow.group);
+      arrows.splice(i, 1);
+    }
+  }
+
   // Update Particles
   for (let i = particles.length - 1; i >= 0; i--) {
     if (!particles[i].update()) {
@@ -524,6 +525,8 @@ function startGame() {
   pipes.length = 0;
   enemies.forEach(e => scene.remove(e.group));
   enemies.length = 0;
+  arrows.forEach(a => scene.remove(a.group));
+  arrows.length = 0;
   lastPipeSpawnTime = Date.now();
 }
 
