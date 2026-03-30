@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Flappy Bird V2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="game-ui">
+      <!-- HUD Score -->
+      <div id="hud-score" class="hidden">0</div>
+
+      <!-- Start Screen -->
+      <div id="menu-screen" class="overlay">
+        <h1 class="logo">FLAPPY <span>3D</span></h1>
+        <p class="subtitle">Version 2.0</p>
+        <button id="start-btn" class="glass-btn">OYUNA BAŞLA</button>
+        <div class="controls-hint">
+          <p>Space veya Tıkla: Zıpla</p>
+        </div>
+      </div>
+
+      <!-- Game Over Screen -->
+      <div id="game-over-screen" class="overlay hidden">
+        <h2 class="title" style="color: #ff4d4d;">OYUN BİTTİ</h2>
+        <div class="stats glass-panel">
+          <div class="stat-item">
+            <span>SKOR</span>
+            <span id="final-score">0</span>
+          </div>
+          <div class="stat-item">
+            <span>EN YÜKSEK</span>
+            <span id="high-score">0</span>
+          </div>
+        </div>
+        <button id="restart-btn" class="glass-btn">TEKRAR DENE</button>
+      </div>
+    </div>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
