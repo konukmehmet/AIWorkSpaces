@@ -23,8 +23,8 @@ let highScore = localStorage.getItem('flappyHighScore') || 0;
 
 // --- Three.js Setup ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a2e); // Deep night sky
-scene.fog = new THREE.Fog(0x3d1b3d, 10, 60);
+scene.background = new THREE.Color(0xaaddff); // Light Blue Sky
+scene.fog = new THREE.Fog(0xaaddff, 15, 70); // Matching Fog
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 2, 12);
@@ -35,12 +35,12 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 document.getElementById('app').appendChild(renderer.domElement);
 
-// --- Lighting (Warm Bosphorus Sunset) ---
-const ambientLight = new THREE.AmbientLight(0xffccaa, 0.5);
+// --- Lighting (Bright Day) ---
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(ambientLight);
 
-const sunLight = new THREE.DirectionalLight(0xffaa00, 1.5);
-sunLight.position.set(10, 10, -10);
+const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+sunLight.position.set(10, 20, 10);
 scene.add(sunLight);
 
 // --- Particle System (Musical Notes) ---
