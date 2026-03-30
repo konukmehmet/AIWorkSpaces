@@ -179,11 +179,14 @@ class Enemy {
 
   update(speed) {
     this.group.position.x -= speed;
+    // Askerlerin ok atması (arrow) user isteği üzerine iptal edildi.
+    /*
     this.shootTimer++;
     if (this.shootTimer > 100 && !this.isDead) { // Shoot every ~1.6s
       arrows.push(new Arrow(this.group.position.clone()));
       this.shootTimer = 0;
     }
+    */
   }
 }
 
