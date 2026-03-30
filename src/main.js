@@ -43,28 +43,31 @@ const sunLight = new THREE.DirectionalLight(0xffaa00, 1.5);
 sunLight.position.set(10, 10, -10);
 scene.add(sunLight);
 
-// --- Particle System (Blood) ---
+// --- Particle System (Musical Notes) ---
 const particles = [];
-class BloodParticle {
+class NoteParticle {
   constructor(position) {
-    const geo = new THREE.SphereGeometry(0.1, 4, 4);
-    const mat = new THREE.MeshBasicMaterial({ color: 0xaa0000 });
+    const geo = new THREE.BoxGeometry(0.1, 0.2, 0.05);
+    const colors = [0xff4d4d, 0xffcc00, 0x00a3a3, 0xff00ff, 0x00ff00];
+    const mat = new THREE.MeshBasicMaterial({ color: colors[Math.floor(Math.random() * colors.length)] });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.position.copy(position);
     
     this.velocity = new THREE.Vector3(
-      (Math.random() - 0.5) * 0.2,
-      Math.random() * 0.2,
-      (Math.random() - 0.5) * 0.2
+      (Math.random() - 0.5) * 0.3,
+      Math.random() * 0.3,
+      (Math.random() - 0.5) * 0.3
     );
     this.gravity = -0.005;
     this.life = 1.0;
+    this.rotationVel = (Math.random() - 0.5) * 0.2;
     scene.add(this.mesh);
   }
 
   update() {
     this.velocity.y += this.gravity;
     this.mesh.position.add(this.velocity);
+    this.mesh.rotation.z += this.rotationVel;
     this.life -= 0.02;
     this.mesh.scale.setScalar(this.life);
     if (this.life <= 0) {
@@ -75,18 +78,22 @@ class BloodParticle {
   }
 }
 
-// --- Enemy Class ---
+// --- Musician Enemy Class ---
 class Enemy {
   constructor(parentPosition, heightOffset) {
     this.group = new THREE.Group();
     
-    // Body
+    const types = ['SINGER', 'GUITARIST', 'DRUMMER', 'VIOLINIST'];
+    this.type = types[Math.floor(Math.random() * types.length)];
+
+    // Body (Performers have more colorful outfits)
     const bodyGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 8);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x334455 });
+    const outfits = [0x552277, 0x2244aa, 0xaa2222, 0x111111];
+    const bodyMat = new THREE.MeshStandardMaterial({ color: outfits[Math.floor(Math.random() * outfits.length)] });
     this.body = new THREE.Mesh(bodyGeo, bodyMat);
     this.group.add(this.body);
 
-    // Head with Fes
+    // Head with Fes (Keep the Ottoman theme)
     const headGeo = new THREE.SphereGeometry(0.3, 8, 8);
     const headMat = new THREE.MeshStandardMaterial({ color: 0xeebb99 });
     const head = new THREE.Mesh(headGeo, headMat);
@@ -99,13 +106,58 @@ class Enemy {
     fes.position.y = 1.0;
     this.group.add(fes);
 
-    // Enemy Sword
-    const swordGeo = new THREE.BoxGeometry(0.1, 1.0, 0.1);
-    const swordMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8 });
-    this.sword = new THREE.Mesh(swordGeo, swordMat);
-    this.sword.position.set(0.5, 0, 0);
-    this.sword.rotation.z = -Math.PI / 4;
-    this.group.add(this.sword);
+    // --- Instruments ---
+    this.instrumentGroup = new THREE.Group();
+    const instMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.1 });
+
+    if (this.type === 'SINGER') {
+      // Microphone stand
+      const standGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.5);
+      const stand = new THREE.Mesh(standGeo, instMat);
+      stand.position.set(0.4, 0, 0);
+      this.instrumentGroup.add(stand);
+      const micGeo = new THREE.SphereGeometry(0.1, 8, 8);
+      const mic = new THREE.Mesh(micGeo, new THREE.MeshStandardMaterial({ color: 0x333333 }));
+      mic.position.set(0.4, 0.75, 0);
+      this.instrumentGroup.add(mic);
+    } else if (this.type === 'GUITARIST') {
+      const gBodyGeo = new THREE.BoxGeometry(0.4, 0.6, 0.15);
+      const gBody = new THREE.Mesh(gBodyGeo, instMat);
+      const gNeckGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.8);
+      const gNeck = new THREE.Mesh(gNeckGeo, instMat);
+      gNeck.position.y = 0.5;
+      const gGroup = new THREE.Group();
+      gGroup.add(gBody); gGroup.add(gNeck);
+      gGroup.position.set(0.5, 0, 0);
+      gGroup.rotation.z = Math.PI / 4;
+      this.instrumentGroup.add(gGroup);
+    } else if (this.type === 'DRUMMER') {
+      const drumGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.6, 16);
+      const drum = new THREE.Mesh(drumGeo, instMat);
+      drum.position.set(0.6, -0.3, 0);
+      drum.rotation.x = Math.PI / 2;
+      this.instrumentGroup.add(drum);
+      // Sticks
+      const stickGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.6);
+      const s1 = new THREE.Mesh(stickGeo, new THREE.MeshStandardMaterial({ color: 0xffffff }));
+      s1.position.set(0.3, 0.2, 0.2); s1.rotation.z = -Math.PI / 4;
+      const s2 = new THREE.Mesh(stickGeo, new THREE.MeshStandardMaterial({ color: 0xffffff }));
+      s2.position.set(0.3, 0.2, -0.2); s2.rotation.z = -Math.PI / 4;
+      this.instrumentGroup.add(s1); this.instrumentGroup.add(s2);
+    } else if (this.type === 'VIOLINIST') {
+      const vBodyGeo = new THREE.BoxGeometry(0.2, 0.4, 0.1);
+      const vBody = new THREE.Mesh(vBodyGeo, instMat);
+      vBody.position.set(0.4, 0.4, 0.2);
+      vBody.rotation.z = Math.PI / 2;
+      this.instrumentGroup.add(vBody);
+      const bowGeo = new THREE.CylinderGeometry(0.01, 0.01, 0.8);
+      const bow = new THREE.Mesh(bowGeo, new THREE.MeshStandardMaterial({ color: 0xffffff }));
+      bow.position.set(0.4, 0.5, 0);
+      bow.rotation.x = Math.PI / 2;
+      this.instrumentGroup.add(bow);
+    }
+
+    this.group.add(this.instrumentGroup);
 
     this.group.position.set(22, heightOffset, 0);
     scene.add(this.group);
@@ -115,8 +167,8 @@ class Enemy {
 
   die() {
     this.isDead = true;
-    for (let i = 0; i < 15; i++) {
-      particles.push(new BloodParticle(this.group.position));
+    for (let i = 0; i < 20; i++) {
+      particles.push(new NoteParticle(this.group.position));
     }
     scene.remove(this.group);
   }
