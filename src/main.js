@@ -338,6 +338,13 @@ class OttomanBird {
 
     this.velocity = 0;
     this.isSwinging = false;
+    this.currentScale = 1.0;
+  }
+
+  updateScale(score) {
+    this.currentScale = 1 + Math.min(score * 0.03, 2.0); // Max 3x scale
+    this.swordGroup.scale.setScalar(this.currentScale);
+    this.flagGroup.scale.setScalar(this.currentScale);
   }
 
   jump() {
@@ -373,6 +380,7 @@ class OttomanBird {
     this.group.rotation.set(0, 0, 0);
     this.velocity = 0;
     this.isSwinging = false;
+    this.updateScale(0);
     this.group.updateMatrixWorld();
   }
 }
@@ -441,10 +449,14 @@ function updateLevel() {
   // Hitbox that covers horse and rider
   birdBodyBox.setFromCenterAndSize(birdPos, new THREE.Vector3(1.2, 1.8, 0.7));
   
-  // Spear hitbox - expanded for long reach
+  // Spear hitbox - expanded for long reach and current scale
   const swordPos = new THREE.Vector3();
   bird.swordGroup.getWorldPosition(swordPos);
-  birdSwordBox.setFromCenterAndSize(swordPos, new THREE.Vector3(2.8, 1.5, 1.2));
+  birdSwordBox.setFromCenterAndSize(swordPos, new THREE.Vector3(
+    2.8 * bird.currentScale, 
+    1.5 * bird.currentScale, 
+    1.2 * bird.currentScale
+  ));
 
   // Update Pipes
   for (let i = pipes.length - 1; i >= 0; i--) {
@@ -582,6 +594,7 @@ function endGame(reason) {
 
 function updateHUD() {
   hudScore.textContent = score;
+  if(bird) bird.updateScale(score);
 }
 
 startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
