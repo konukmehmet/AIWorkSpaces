@@ -69,23 +69,23 @@ const arrows = [];
 class Arrow {
   constructor(position) {
     this.group = new THREE.Group();
-    // Thicker and longer shaft for better visibility
-    const shaftGeo = new THREE.CylinderGeometry(0.1, 0.1, 1.4); 
+    // Extra thick shaft for maximum visibility
+    const shaftGeo = new THREE.CylinderGeometry(0.2, 0.2, 1.6); 
     const shaftMat = new THREE.MeshStandardMaterial({ color: 0x5c4033 });
     const shaft = new THREE.Mesh(shaftGeo, shaftMat);
     shaft.rotation.z = Math.PI / 2;
     this.group.add(shaft);
 
-    // Larger glowing tip
-    const tipGeo = new THREE.ConeGeometry(0.18, 0.35, 8);
+    // Giant glowing tip
+    const tipGeo = new THREE.ConeGeometry(0.35, 0.6, 8);
     const tipMat = new THREE.MeshStandardMaterial({ 
-      color: 0xeeeeee, 
+      color: 0xffffff, 
       metalness: 0.9, 
-      emissive: 0x666666,
-      emissiveIntensity: 0.5
+      emissive: 0xffffff,
+      emissiveIntensity: 0.8
     });
     const tip = new THREE.Mesh(tipGeo, tipMat);
-    tip.position.x = -0.7; // Adjusted for longer shaft
+    tip.position.x = -0.8; // Adjusted for extra long shaft
     tip.rotation.z = Math.PI / 2;
     this.group.add(tip);
 
