@@ -1,54 +1,77 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>FlappyHorse</title>
+    <title>FlappyHorse — Arcade Combat</title>
+    <meta name="description" content="Flappy Horse Arcade Combat – jump, attack, and survive endless waves of enemies on horseback!" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
   </head>
   <body>
     <div id="game-ui">
-      <!-- HUD elements -->
+
+      <!-- ── HUD ─────────────────────────────────────────── -->
       <div id="hud-score" class="hidden">0</div>
-      
-      <!-- Mobile Controls (Transparent layers) -->
+
+      <!-- Combo display (top-right) -->
+      <div id="hud-combo"></div>
+
+      <!-- Combo decay bar (below combo text) -->
+      <div id="combo-bar-wrap" class="hidden">
+        <div id="combo-bar"></div>
+      </div>
+
+      <!-- Wave announcement (centre-screen flash) -->
+      <div id="wave-flash"></div>
+
+      <!-- ── Mobile Controls ─────────────────────────────── -->
       <div id="mobile-controls" class="hidden">
-        <button id="jump-btn" class="control-btn left">ZIPLA</button>
+        <button id="jump-btn"   class="control-btn left">JUMP</button>
         <div class="combo-right">
-          <button id="spit-btn" class="control-btn spit">TÜKÜR</button>
-          <button id="attack-btn" class="control-btn right">SALDIR</button>
+          <button id="spit-btn"   class="control-btn spit">SPIT</button>
+          <button id="attack-btn" class="control-btn right">SLICE</button>
         </div>
       </div>
 
-      <!-- Start Screen -->
+      <!-- ── Start Screen ────────────────────────────────── -->
       <div id="menu-screen" class="overlay">
         <h1 class="logo">FLAPPY <span>HORSE</span></h1>
-        <p class="subtitle">Version 3.0 - ARCHER EDITION</p>
-        <button id="start-btn" class="glass-btn">OYUNA BAŞLA</button>
+        <p class="subtitle">Arcade Combat Edition</p>
+
+        <div class="enemy-legend">
+          <div class="legend-item archer">⚔ Archer <span>×2 pts</span></div>
+          <div class="legend-item diver"> ↘ Diver  <span>×3 pts</span></div>
+          <div class="legend-item tank">  ◼ Tank   <span>×5 pts</span></div>
+        </div>
+
+        <button id="start-btn" class="glass-btn">PLAY</button>
+
         <div class="controls-hint">
-          <p>Space veya Tıkla: Zıpla/Savun</p>
+          <p>↑ / W &nbsp;— Jump &nbsp;|&nbsp; SPACE — Attack &nbsp;|&nbsp; E / Shift — Spit</p>
         </div>
       </div>
 
-      <!-- Game Over Screen -->
+      <!-- ── Game Over Screen ────────────────────────────── -->
       <div id="game-over-screen" class="overlay hidden">
-        <h2 class="title" style="color: #ff4d4d;">OYUN BİTTİ</h2>
+        <h2 class="title" style="color:#ff4d4d;">GAME OVER</h2>
         <div class="stats glass-panel">
           <div class="stat-item">
-            <span>SKOR</span>
+            <span>SCORE</span>
             <span id="final-score">0</span>
           </div>
           <div class="stat-item">
-            <span>EN YÜKSEK</span>
+            <span>BEST</span>
             <span id="high-score">0</span>
           </div>
         </div>
-        <button id="restart-btn" class="glass-btn">TEKRAR DENE</button>
+        <button id="restart-btn" class="glass-btn">TRY AGAIN</button>
       </div>
-    </div>
+
+    </div><!-- /#game-ui -->
+
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>

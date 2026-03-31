@@ -1,0 +1,129 @@
+// ============================================================
+//  scene.js — Three.js scene, camera, renderer, lighting, bg
+// ============================================================
+import * as THREE from 'three';
+
+// ---- Core setup ----------------------------------------
+export const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0d1a);
+scene.fog = new THREE.Fog(0x3d1b3d, 10, 60);
+
+export const camera = new THREE.PerspectiveCamera(
+  75, window.innerWidth / window.innerHeight, 0.1, 1000
+);
+camera.position.set(0, 2, 12);
+camera.lookAt(0, 0, 0);
+
+export const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+document.getElementById('app').appendChild(renderer.domElement);
+
+// ---- Lighting ------------------------------------------
+const ambientLight = new THREE.AmbientLight(0xffccaa, 0.5);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xffaa00, 1.5);
+sunLight.position.set(10, 10, -10);
+scene.add(sunLight);
+
+// Eerie purple rim light for drama
+const rimLight = new THREE.DirectionalLight(0x9933ff, 0.4);
+rimLight.position.set(-10, 5, 5);
+scene.add(rimLight);
+
+// ---- Particles -----------------------------------------
+export const particles = [];
+
+export class SparkParticle {
+  constructor(position, color = 0xffcc00) {
+    const geo = new THREE.SphereGeometry(0.06, 4, 4);
+    const mat = new THREE.MeshBasicMaterial({ color });
+    this.mesh = new THREE.Mesh(geo, mat);
+    this.mesh.position.copy(position);
+    this.velocity = new THREE.Vector3(
+      (Math.random() - 0.5) * 0.5,
+      (Math.random() - 0.5) * 0.5,
+      (Math.random() - 0.5) * 0.3
+    );
+    this.life = 1.0;
+    scene.add(this.mesh);
+  }
+  update() {
+    this.mesh.position.add(this.velocity);
+    this.velocity.y -= 0.01; // slight gravity on sparks
+    this.life -= 0.04;
+    this.mesh.scale.setScalar(this.life);
+    if (this.life <= 0) { scene.remove(this.mesh); return false; }
+    return true;
+  }
+}
+
+export function spawnParticles(position, color, count = 15) {
+  for (let i = 0; i < count; i++) particles.push(new SparkParticle(position, color));
+}
+
+export function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    if (!particles[i].update()) particles.splice(i, 1);
+  }
+}
+
+// ---- Background skyline --------------------------------
+function createSkyline() {
+  const g = new THREE.Group();
+  for (let i = 0; i < 15; i++) {
+    const stoneMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e });
+    const domeGeo  = new THREE.SphereGeometry(2 + Math.random() * 2, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+    const dome = new THREE.Mesh(domeGeo, stoneMat);
+    dome.position.set((Math.random() - 0.5) * 100, -10, -30 - Math.random() * 20);
+    g.add(dome);
+
+    const minGeo = new THREE.CylinderGeometry(0.3, 0.3, 15, 8);
+    const min = new THREE.Mesh(minGeo, stoneMat);
+    min.position.copy(dome.position);
+    min.position.x += (Math.random() - 0.5) * 5;
+    min.position.y += 5;
+    g.add(min);
+  }
+  scene.add(g);
+  return g;
+}
+export const skyline = createSkyline();
+
+export function scrollSkyline(pipeSpeed) {
+  skyline.children.forEach(obj => {
+    obj.position.x -= pipeSpeed * 0.1;
+    if (obj.position.x < -60) obj.position.x = 60;
+  });
+}
+
+// ---- Camera shake (screen shake on death) --------------
+import { gsap } from 'gsap';
+let shaking = false;
+export function cameraShake(intensity = 0.5, duration = 0.4) {
+  if (shaking) return;
+  shaking = true;
+  const origin = { x: camera.position.x, y: camera.position.y };
+  gsap.to(camera.position, {
+    x: origin.x + (Math.random() - 0.5) * intensity,
+    y: origin.y + (Math.random() - 0.5) * intensity,
+    duration: duration / 4,
+    yoyo: true,
+    repeat: 3,
+    ease: 'none',
+    onComplete: () => {
+      camera.position.x = origin.x;
+      camera.position.y = origin.y;
+      shaking = false;
+    }
+  });
+}
+
+// ---- Resize handler ------------------------------------
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
