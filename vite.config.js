@@ -2,5 +2,6 @@ import { defineConfig } from 'vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/AIWorkSpaces/', // Sets base path for GitHub Pages matching the repository name
+  // Use relative paths to support both Vercel (root) and GitHub Pages (subfolder)
+  base: './', 
 })
