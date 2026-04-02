@@ -100,3 +100,22 @@ export function triggerWaveFlash(level) {
     }
   );
 }
+
+/** Show a floating number (+2, etc) at a screen position */
+export function showFloatingText(x, y, text, color = '#ffd700') {
+  const el = document.createElement('div');
+  el.className = 'floating-text';
+  el.textContent = text;
+  el.style.color = color;
+  el.style.left  = `${x}px`;
+  el.style.top   = `${y}px`;
+  document.body.appendChild(el);
+
+  // Animate: immediately start transition
+  requestAnimationFrame(() => {
+    el.style.transform = 'translateY(-100px) scale(1.4)';
+    el.style.opacity   = '0';
+  });
+
+  setTimeout(() => el.remove(), 900);
+}

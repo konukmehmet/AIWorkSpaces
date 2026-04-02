@@ -2,10 +2,14 @@
 //  combat.js — Collision detection & combat resolution
 // ============================================================
 import * as THREE from 'three';
-import { spawnParticles } from './scene.js';
-import { spits, arrows }  from './player.js';
-import { enemies, pipes } from './level.js';
-import { onEnemyKill }    from './scoring.js';
+import { spawnParticles, spawnImpactVFX, cameraShake } from './scene.js';
+import { spits, arrows }                      from './player.js';
+import { enemies, pipes }                     from './level.js';
+
+import { onEnemyKill }                        from './scoring.js';
+import { renderer, camera }                   from './scene.js';
+import { state }                              from './state.js';
+import { showFloatingText }                   from './ui.js';
 import {
   SCORE_ARCHER_KILL,
   SCORE_DIVER_KILL,
@@ -51,23 +55,31 @@ function _checkEnemies(player, speed, bodyBox, swordBox, onDeath) {
     // Move enemy this frame
     enemy.update(speed);
 
+    // Sword hit
+    if (player.isSwinging && swordBox.intersectsBox(enemy.box)) {
+      const dead = enemy.hit();
+      
+      // JUICE: Impact recoil for Tank
+      if (enemy.type === 'Tank') {
+        player.velocity = -0.05; // Slight upward-backwards jolt
+        cameraShake(0.4, 0.3);
+      } else {
+        cameraShake(0.15, 0.2);
+      }
+
+      if (dead) {
+        _handleKill(enemy);
+        enemies.splice(i, 1);
+      }
+      continue;
+    }
+
     // Body hit = death
     if (bodyBox.intersectsBox(enemy.box)) {
       onDeath('Enemy Collision');
       return; // stop processing — we're dead
     }
 
-    // Sword hit
-    if (player.isSwinging && swordBox.intersectsBox(enemy.box)) {
-      const dead = enemy.hit();
-      if (dead) {
-        spawnParticles(enemy.group.position, 0xffd700, 6);
-        onEnemyKill(ENEMY_POINTS[enemy.type] ?? 2);
-        showHitFlash();
-        enemies.splice(i, 1);
-      }
-      continue; // don't also check offscreen this frame
-    }
 
     // Cull offscreen enemies
     if (enemy.isOffscreen()) {
@@ -138,6 +150,26 @@ function _checkSpits() {
 
     if (hit) { spit.destroy(); spits.splice(i, 1); }
   }
+}
+
+// ---- Internals for juicy kills --------------------------
+
+function _handleKill(enemy) {
+  // 1. Effects
+  spawnImpactVFX(enemy.group.position);
+  spawnParticles(enemy.group.position, 0xffd700, 8);
+  showHitFlash();
+
+  // 2. Score & Combo
+  const earned = onEnemyKill(ENEMY_POINTS[enemy.type] ?? 2);
+
+  // 3. Floating Text
+  const vector = enemy.group.position.clone().project(camera);
+  const x = (vector.x + 1) * renderer.domElement.width / 2;
+  const y = (-vector.y + 1) * renderer.domElement.height / 2;
+  
+  const comboLabel = state.comboMultiplier > 1 ? ` (x${state.comboMultiplier})` : '';
+  showFloatingText(x, y, `+${earned}${comboLabel}`);
 }
 
 // ---- White hit-flash overlay (on kill) -------------------

@@ -28,6 +28,9 @@ export const state = {
 
   // Wave events
   pendingWaveFlash: false,
+
+  // Hit-stop (temporal freeze)
+  hitStopTicks: 0,
 };
 
 // ---- Combo helpers --------------------------------
@@ -79,3 +82,4 @@ export function resetState() {
   state.difficultyLevel = 0;
   state.pendingWaveFlash = false;
 }
+

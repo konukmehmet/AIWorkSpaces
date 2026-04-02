@@ -319,6 +319,20 @@ canvas  { display: block; width: 100%; height: 100%; }
 }
 
 /* ── Responsive ─────────────────────────────────────────── */
+/* Floating combat text (e.g. +2) */
+.floating-text {
+  position: fixed;
+  pointer-events: none;
+  font-weight: 900;
+  font-size: 24px;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(0,0,0,0.5);
+  font-family: 'Outfit', sans-serif;
+  z-index: 1000;
+  transition: transform 0.8s ease-out, opacity 0.8s ease-out;
+  user-select: none;
+}
+
 @media (max-width: 600px) {
   .logo          { font-size: 3rem; }
   .overlay       { padding: 2rem 1.8rem; }

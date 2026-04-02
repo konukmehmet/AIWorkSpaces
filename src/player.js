@@ -161,9 +161,9 @@ export class OttomanBird {
       color: 0xffffff, emissive: 0xffffff,
       emissiveIntensity: 0.3, metalness: 0.8, roughness: 0.1,
     });
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.5, 0.1), this.bladeMat);
-    blade.position.y = 1.4;
-    this.swordGroup.add(blade);
+    this.swordMesh = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.5, 0.1), this.bladeMat);
+    this.swordMesh.position.y = 1.4;
+    this.swordGroup.add(this.swordMesh);
     this.swordGroup.position.set(0.7, -0.1, 0.4);
     this.swordGroup.rotation.z = -Math.PI / 2;
     this.riderGroup.add(this.swordGroup);
@@ -208,16 +208,28 @@ export class OttomanBird {
   swing() {
     if (state.phase !== GameState.PLAYING || this.isSwinging) return;
     this.isSwinging = true;
+
     // Glow effect on swing
     this.bladeMat.emissive.set(0xffd700);
     this.bladeMat.emissiveIntensity = 1.2;
+
+    // Jousting Thrust: Push weapon forward towards the enemy
+    gsap.to(this.swordGroup.position, {
+      x: 2.2, // thrust forward significantly
+      duration: 0.1,
+      yoyo: true,
+      repeat: 1
+    });
+
+    // Slash slightly downwards
     gsap.to(this.swordGroup.rotation, {
-      z: Math.PI / 4,
+      z: -Math.PI / 1.4, 
       duration: 0.1,
       yoyo: true,
       repeat: 1,
       onComplete: () => {
-        this.isSwinging = false;
+        // Keep the weapon deadly for an extra 200ms after the animation!
+        setTimeout(() => { this.isSwinging = false; }, 200);
         gsap.to(this.bladeMat, { emissiveIntensity: 0.3, duration: 0.3,
           onUpdate: () => this.bladeMat.emissive.set(0xffffff),
         });
@@ -243,19 +255,36 @@ export class OttomanBird {
   }
 
   // ---- Per-frame ----
+  /** Returns a box for the horse/rider body only (not weapon) */
   getBodyBox() {
     const pos = new THREE.Vector3();
     this.group.getWorldPosition(pos);
-    return new THREE.Box3().setFromCenterAndSize(pos, new THREE.Vector3(1.2, 1.8, 0.7));
+    
+    // Use a much smaller, fairer 'hurtbox' inside the player's center
+    // This prevents cheap deaths from hitting the tips of the 3D model
+    return new THREE.Box3().setFromCenterAndSize(pos, new THREE.Vector3(
+      0.9 * this.currentScale, 
+      0.9 * this.currentScale, 
+      0.8 * this.currentScale
+    ));
   }
 
   getSwordBox() {
+    if (!this.isSwinging) return new THREE.Box3().makeEmpty();
+    
     const pos = new THREE.Vector3();
-    this.swordGroup.getWorldPosition(pos);
+    if (this.swordMesh) {
+      this.swordMesh.getWorldPosition(pos);
+    } else {
+      this.swordGroup.getWorldPosition(pos);
+    }
+
+    // A manually sized box centered on the blade guarantees consistent hits
+    // regardless of the exact rotation angle of the mesh.
     return new THREE.Box3().setFromCenterAndSize(pos, new THREE.Vector3(
-      2.8 * this.currentScale,
-      1.5 * this.currentScale,
-      1.2 * this.currentScale
+      3.5 * this.currentScale,
+      3.5 * this.currentScale,
+      1.5 * this.currentScale
     ));
   }
 
@@ -263,9 +292,18 @@ export class OttomanBird {
     if (state.phase !== GameState.PLAYING) return;
     this.velocity += GRAVITY;
     this.group.position.y += this.velocity;
+
+    // Smoother tilt
     this.group.rotation.z = Math.max(-0.4, Math.min(0.2, this.velocity * 2));
-    if (this.group.position.y < GROUND_Y)   onDeath('Ground Hit');
-    if (this.group.position.y > CEILING_Y)  onDeath('Ceiling Hit');
+
+    // Ground check: Only if we've fallen significantly (safety)
+    // and aren't just starting the animation.
+    if (this.group.position.y < GROUND_Y) {
+      onDeath('Ground Hit');
+    }
+    if (this.group.position.y > CEILING_Y) {
+      onDeath('Ceiling Hit');
+    }
   }
 
   reset() {

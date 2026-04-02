@@ -69,8 +69,10 @@ export class ArcherEnemy {
   update(speed) {
     if (this.isDead) return;
     this.group.position.x -= speed;
-    this.group.updateMatrixWorld();
-    this.box.setFromObject(this.group);
+    
+    const pos = new THREE.Vector3();
+    this.group.getWorldPosition(pos);
+    this.box.setFromCenterAndSize(pos, new THREE.Vector3(0.8, 1.4, 0.8));
 
     // Fire arrows only at difficulty tier >= 2
     if (state.enemyTier >= 2) {
@@ -136,8 +138,10 @@ export class DiverEnemy {
     this.group.children.forEach((c, i) => {
       if (i > 2) c.rotation.z += Math.sin(Date.now() * 0.01) * 0.05;
     });
-    this.group.updateMatrixWorld();
-    this.box.setFromObject(this.group);
+    
+    const pos = new THREE.Vector3();
+    this.group.getWorldPosition(pos);
+    this.box.setFromCenterAndSize(pos, new THREE.Vector3(0.8, 1.4, 0.8));
   }
 
   hit() {
@@ -222,8 +226,10 @@ export class TankEnemy {
   update(speed) {
     if (this.isDead) return;
     this.group.position.x -= speed * 0.6; // slower
-    this.group.updateMatrixWorld();
-    this.box.setFromObject(this.group);
+    
+    const pos = new THREE.Vector3();
+    this.group.getWorldPosition(pos);
+    this.box.setFromCenterAndSize(pos, new THREE.Vector3(1.1, 1.6, 1.1));
   }
 
   hit() {

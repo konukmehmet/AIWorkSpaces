@@ -64,6 +64,16 @@ export function spawnParticles(position, color, count = 15) {
   for (let i = 0; i < count; i++) particles.push(new SparkParticle(position, color));
 }
 
+/** Radial burst of white particles on impact */
+export function spawnImpactVFX(position) {
+  for (let i = 0; i < 12; i++) {
+    const p = new SparkParticle(position, 0xffffff);
+    p.velocity.multiplyScalar(2.0); // Make them move fast
+    p.life = 0.8;
+    particles.push(p);
+  }
+}
+
 export function updateParticles() {
   for (let i = particles.length - 1; i >= 0; i--) {
     if (!particles[i].update()) particles.splice(i, 1);
@@ -102,17 +112,19 @@ export function scrollSkyline(pipeSpeed) {
 // ---- Camera shake (screen shake on death) --------------
 import { gsap } from 'gsap';
 let shaking = false;
-export function cameraShake(intensity = 0.5, duration = 0.4) {
+/** Energetic camera shake for different impact levels */
+export function cameraShake(intensity = 0.3, duration = 0.3) {
   if (shaking) return;
   shaking = true;
   const origin = { x: camera.position.x, y: camera.position.y };
+  
   gsap.to(camera.position, {
     x: origin.x + (Math.random() - 0.5) * intensity,
     y: origin.y + (Math.random() - 0.5) * intensity,
-    duration: duration / 4,
+    duration: duration / 6,
     yoyo: true,
-    repeat: 3,
-    ease: 'none',
+    repeat: 5,
+    ease: 'power2.inOut',
     onComplete: () => {
       camera.position.x = origin.x;
       camera.position.y = origin.y;

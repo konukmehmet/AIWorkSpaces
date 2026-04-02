@@ -18,8 +18,6 @@ import {
 const bird = new OttomanBird();
 
 // ---- Input cooldown guard ----------------------------------
-// Prevents the canvas pointerdown from firing immediately after
-// the start/restart button click event resolves.
 let inputCooldownUntil = 0;
 const INPUT_COOLDOWN_MS = 350;
 
@@ -38,8 +36,6 @@ function startGame() {
   showPlaying();
   updateHUD();
 
-  // Ignore all canvas/key input for a short window so the
-  // button click doesn't immediately trigger a jump.
   inputCooldownUntil = Date.now() + INPUT_COOLDOWN_MS;
 }
 
@@ -68,7 +64,6 @@ document.getElementById('jump-btn')   .addEventListener('pointerdown', handleJum
 document.getElementById('attack-btn') .addEventListener('pointerdown', handleAttack);
 document.getElementById('spit-btn')   .addEventListener('pointerdown', handleSpit);
 
-// Tap canvas = jump (guarded by cooldown)
 renderer.domElement.addEventListener('pointerdown', () => {
   if (state.phase === GameState.PLAYING && Date.now() > inputCooldownUntil) bird.jump();
 });
@@ -85,37 +80,38 @@ function animate() {
   requestAnimationFrame(animate);
 
   if (state.phase === GameState.PLAYING) {
-    const speed = state.pipeSpeed;
+      const speed = state.pipeSpeed;
 
-    // 1. Combo decay tick
-    tickCombo();
+      // 1. Combo decay tick
+      tickCombo();
 
-    // 2. Player physics
-    bird.update(endGame);
+      // 2. Player physics
+      bird.update(endGame);
 
-    // 3. Level: spawn + move pipes
-    updateLevel(bird.group.position.x, speed, onPipePass, endGame);
+      // 3. Level logic
+      updateLevel(bird.group.position.x, speed, onPipePass, endGame);
 
-    // 4. Combat: move enemies, detect all collisions
-    updateCombat(bird, speed, endGame);
+      // 4. Combat logic
+      updateCombat(bird, speed, endGame);
 
-    // 5. Particles
-    updateParticles();
+      // 5. Particles
+      updateParticles();
 
-    // 6. Parallax background
-    scrollSkyline(speed);
+      // 6. Background
+      scrollSkyline(speed);
 
-    // 7. Scale player weapon to score
-    bird.updateScale(state.score);
+      // 7. Dynamic weapon scaling
+      bird.updateScale(state.score);
 
-    // 8. Combo bar animation
-    tickComboBar();
+      // 8. HUD & Combo bar
+      tickComboBar();
 
-    // 9. Wave difficulty flash
-    if (state.pendingWaveFlash) {
-      state.pendingWaveFlash = false;
-      triggerWaveFlash(state.difficultyLevel + 1);
-    }
+      // 9. Wave flash
+      if (state.pendingWaveFlash) {
+        state.pendingWaveFlash = false;
+        triggerWaveFlash(state.difficultyLevel + 1);
+      }
+
   }
 
   renderer.render(scene, camera);
