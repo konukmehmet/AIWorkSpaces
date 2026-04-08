@@ -11,26 +11,41 @@ export const pipes   = [];
 export const enemies = [];
 let lastSpawnTime = 0;
 
-// ---- Minaret construction --------------------------------
-function createMinaret(isTop) {
+// ---- Farm Fence/Haybale obstacle construction -----------
+function createFarmObstacle(isTop) {
   const g = new THREE.Group();
-  const stoneMat  = new THREE.MeshStandardMaterial({ color: 0x888899, roughness: 0.9 });
-  const copperMat = new THREE.MeshStandardMaterial({ color: 0xaa8844, metalness: 0.8, roughness: 0.2 });
 
-  const hatH = 3;
-  const hat  = new THREE.Mesh(new THREE.ConeGeometry(1.2, hatH, 16), copperMat);
-  hat.position.y = isTop ? hatH / 2 : -hatH / 2;
-  if (isTop) hat.rotation.x = Math.PI;
-  g.add(hat);
+  // Materials
+  const woodMat = new THREE.MeshStandardMaterial({ color: 0x8d5524, roughness: 1.0 });
+  const hayMat  = new THREE.MeshStandardMaterial({ color: 0xe8b84b, roughness: 0.95, flatShading: true });
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x6d4c1f, roughness: 1.0 });
 
-  const balcony = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.2, 0.4, 16), stoneMat);
-  balcony.position.y = isTop ? hatH + 0.5 : -(hatH + 0.5);
-  g.add(balcony);
-
+  // Long wooden shaft (fence post stack)
   const shaftH = 40;
-  const shaft  = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, shaftH, 16), stoneMat);
-  shaft.position.y = isTop ? hatH + 1 + shaftH / 2 : -(hatH + 1 + shaftH / 2);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.9, shaftH, 8), woodMat);
+  shaft.position.y = isTop ? shaftH / 2 : -shaftH / 2;
   g.add(shaft);
+
+  // Cross-planks for fence feel
+  [-4, -2, 0, 2, 4].forEach(offset => {
+    const plank = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.25, 0.4), postMat);
+    plank.position.y = isTop ? offset + 1 : -offset - 1;
+    g.add(plank);
+  });
+
+  // Haybale cluster at the tip
+  const baleGeo = new THREE.IcosahedronGeometry(1.5, 0);
+  const bale = new THREE.Mesh(baleGeo, hayMat);
+  bale.position.y = isTop ? 1.5 : -1.5;
+  g.add(bale);
+
+  // Smaller bales beside main one
+  const smallBaleGeo = new THREE.IcosahedronGeometry(0.9, 0);
+  [-1.2, 1.2].forEach(xOff => {
+    const sb = new THREE.Mesh(smallBaleGeo, hayMat);
+    sb.position.set(xOff, isTop ? 0.5 : -0.5, 0.2);
+    g.add(sb);
+  });
 
   return g;
 }
@@ -40,11 +55,11 @@ function spawnWave() {
   const pipeGroup    = new THREE.Group();
   const heightOffset = (Math.random() - 0.5) * 8;
 
-  const top = createMinaret(true);
+  const top = createFarmObstacle(true);
   top.position.y = heightOffset + PIPE_GAP / 2;
   pipeGroup.add(top);
 
-  const bot = createMinaret(false);
+  const bot = createFarmObstacle(false);
   bot.position.y = heightOffset - PIPE_GAP / 2;
   pipeGroup.add(bot);
 

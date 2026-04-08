@@ -109,7 +109,7 @@ export const skyline = createSkyline();
 
 export function scrollSkyline(pipeSpeed) {
   skyline.children.forEach(obj => {
-    obj.position.x -= pipeSpeed * 0.1;
+    obj.position.x -= pipeSpeed * 0.25;
     if (obj.position.x < -60) obj.position.x = 60;
   });
 }

@@ -107,10 +107,15 @@ export class OttomanBird {
 
     // Legs
     const legGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.6);
+    this.frontLegs = [];
     [[0.4, 0.2], [0.4, -0.2], [-0.4, 0.2], [-0.4, -0.2]].forEach(([x, z]) => {
-      const leg = new THREE.Mesh(legGeo, horseMat);
-      leg.position.set(x, -0.7, z);
+      const legGeoClone = new THREE.CylinderGeometry(0.1, 0.1, 0.6);
+      // Offset geometry to hinge at the top of the leg
+      legGeoClone.translate(0, -0.3, 0);
+      const leg = new THREE.Mesh(legGeoClone, horseMat);
+      leg.position.set(x, -0.4, z); // attach closer to top body
       this.horseGroup.add(leg);
+      if (x > 0) this.frontLegs.push(leg);
     });
 
     this.horseGroup.position.y = -0.5;
@@ -119,79 +124,54 @@ export class OttomanBird {
 
   _buildRider() {
     this.riderGroup = new THREE.Group();
-    const bodyMat   = new THREE.MeshStandardMaterial({ color: 0xeebb00 });
-    const darkMat   = new THREE.MeshStandardMaterial({ color: 0x111111 });
-    const redMat    = new THREE.MeshStandardMaterial({ color: 0x990000 });
+    const shirtMat  = new THREE.MeshStandardMaterial({ color: 0x3d6bab }); // blue overalls
+    const hatMat    = new THREE.MeshStandardMaterial({ color: 0xd4a96a }); // straw hat
+    const skinMat   = new THREE.MeshStandardMaterial({ color: 0xffcc99 });
 
     // Body
-    this.body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.6, 0.6), bodyMat);
+    this.body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), shirtMat);
     this.riderGroup.add(this.body);
 
-    // Beak
-    const beak = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.15, 0.2),
-      new THREE.MeshStandardMaterial({ color: 0xffa500 }));
-    beak.position.set(0.4, -0.1, 0);
-    this.riderGroup.add(beak);
+    // Head
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), skinMat);
+    head.position.y = 0.5;
+    this.riderGroup.add(head);
 
-    // Fez
-    const fezGroup = new THREE.Group();
-    fezGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 0.3, 16), redMat));
-    const tassel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.2), darkMat);
-    tassel.position.set(0, 0.15, 0.1); tassel.rotation.x = Math.PI / 4;
-    fezGroup.add(tassel);
-    fezGroup.position.set(0, 0.45, 0);
-    this.riderGroup.add(fezGroup);
+    // Straw Hat
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.05, 12), hatMat);
+    brim.position.y = 0.72;
+    this.riderGroup.add(brim);
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 0.25, 12), hatMat);
+    crown.position.y = 0.85;
+    this.riderGroup.add(crown);
 
-    // Mustache
-    const musMat = darkMat;
-    const musGeo = new THREE.TorusGeometry(0.12, 0.04, 8, 16, Math.PI);
-    [-0.08, 0.08].forEach(z => {
-      const m = new THREE.Mesh(musGeo, musMat);
-      m.position.set(0.35, -0.15, z); m.rotation.z = Math.PI;
-      this.riderGroup.add(m);
-    });
-
-    // Spear (sword)
+    // Weapon (Pitchfork instead of sword)
     this.swordGroup = new THREE.Group();
-    this.swordGroup.add(new THREE.Mesh(
-      new THREE.CylinderGeometry(0.04, 0.04, 0.4),
-      new THREE.MeshStandardMaterial({ color: 0x442200 })
-    ));
-    this.bladeMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff, emissive: 0xffffff,
-      emissiveIntensity: 0.3, metalness: 0.8, roughness: 0.1,
+    this.bladeMat = new THREE.MeshStandardMaterial({ 
+      color: 0xaaaaaa, emissive: 0x000000, metalness: 0.8, roughness: 0.2 
     });
-    this.swordMesh = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.5, 0.1), this.bladeMat);
-    this.swordMesh.position.y = 1.4;
+    
+    const handleMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b });
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.5), handleMat);
+    this.swordGroup.add(handle);
+
+    const tineBase = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.04, 0.04), this.bladeMat);
+    tineBase.position.y = 1.25;
+    this.swordGroup.add(tineBase);
+
+    this.swordMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5), this.bladeMat);
+    this.swordMesh.position.y = 1.5;
     this.swordGroup.add(this.swordMesh);
+
+    [-0.12, 0.12].forEach(xOff => {
+      const tine = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4), this.bladeMat);
+      tine.position.set(xOff, 1.45, 0);
+      this.swordGroup.add(tine);
+    });
+
     this.swordGroup.position.set(0.7, -0.1, 0.4);
     this.swordGroup.rotation.z = -Math.PI / 2;
     this.riderGroup.add(this.swordGroup);
-
-    // Wings
-    const wingGeo = new THREE.BoxGeometry(0.4, 0.05, 0.4);
-    const wingMat = new THREE.MeshStandardMaterial({ color: 0xddcc00 });
-    this.leftWing  = new THREE.Mesh(wingGeo, wingMat);
-    this.rightWing = new THREE.Mesh(wingGeo, wingMat);
-    this.leftWing.position.set(-0.1, 0, 0.35);
-    this.rightWing.position.set(-0.1, 0, -0.35);
-    this.riderGroup.add(this.leftWing);
-    this.riderGroup.add(this.rightWing);
-
-    // Turkish flag
-    this.flagGroup = new THREE.Group();
-    const wpMat   = new THREE.MeshStandardMaterial({ color: 0x442200 });
-    const flagPole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.2), wpMat);
-    this.flagGroup.add(flagPole);
-    const flagCloth = new THREE.Mesh(
-      new THREE.BoxGeometry(0.6, 0.4, 0.02),
-      new THREE.MeshStandardMaterial({ color: 0xff0000 })
-    );
-    flagCloth.position.set(0.3, 0.35, 0);
-    this.flagGroup.add(flagCloth);
-    this.flagGroup.position.set(0.2, 0.3, -0.4);
-    this.flagGroup.rotation.x = -0.2;
-    this.riderGroup.add(this.flagGroup);
 
     this.riderGroup.position.y = 0.4;
     this.group.add(this.riderGroup);
@@ -201,8 +181,11 @@ export class OttomanBird {
   jump() {
     if (state.phase !== GameState.PLAYING) return;
     this.velocity = JUMP_STRENGTH;
-    gsap.to(this.leftWing.rotation,  { z: 0.6, duration: 0.1, yoyo: true, repeat: 1 });
-    gsap.to(this.rightWing.rotation, { z: -0.6, duration: 0.1, yoyo: true, repeat: 1 });
+    if (this.frontLegs) {
+      this.frontLegs.forEach(leg => {
+        gsap.to(leg.rotation, { z: -1.2, duration: 0.15, yoyo: true, repeat: 1 });
+      });
+    }
   }
 
   swing() {
@@ -251,7 +234,7 @@ export class OttomanBird {
   updateScale(score) {
     this.currentScale = 1 + Math.min(score * 0.02, 1.5);
     this.swordGroup.scale.setScalar(this.currentScale);
-    this.flagGroup.scale.setScalar(this.currentScale);
+    // flag removed in farm theme
   }
 
   // ---- Per-frame ----

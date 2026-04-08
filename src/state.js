@@ -29,9 +29,9 @@ export const state = {
   // Wave events
   pendingWaveFlash: false,
 
-  // Hit-stop (temporal freeze)
-  hitStopTicks: 0,
+  // Hit-stop removed (was unused)
 };
+
 
 // ---- Combo helpers --------------------------------
 

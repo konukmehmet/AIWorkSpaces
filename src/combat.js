@@ -22,6 +22,9 @@ const ENEMY_POINTS = {
   Tank:   SCORE_TANK_KILL,
 };
 
+// Reusable Box3 to avoid GC pressure
+const _pipeBox = new THREE.Box3();
+
 // ---- Main collision pass (called every PLAYING frame) -----
 // speed: current pipeSpeed from state
 export function updateCombat(player, speed, onDeath) {
@@ -37,11 +40,10 @@ export function updateCombat(player, speed, onDeath) {
 // ---- 1. Pipe collision ------------------------------------
 function _checkPipes(player, bodyBox, onDeath) {
   for (const pipe of pipes) {
-    // Only check pipes that are close
     if (Math.abs(pipe.position.x - player.group.position.x) > 4) continue;
     pipe.children.forEach(segment => {
-      const pBox = new THREE.Box3().setFromObject(segment);
-      if (bodyBox.intersectsBox(pBox)) onDeath('Pipe Collision');
+      _pipeBox.setFromObject(segment); // reuse, no GC
+      if (bodyBox.intersectsBox(_pipeBox)) onDeath('Pipe Collision');
     });
   }
 }
@@ -59,9 +61,9 @@ function _checkEnemies(player, speed, bodyBox, swordBox, onDeath) {
     if (player.isSwinging && swordBox.intersectsBox(enemy.box)) {
       const dead = enemy.hit();
       
-      // JUICE: Impact recoil for Tank
+      // JUICE: Impact recoil
       if (enemy.type === 'Tank') {
-        player.velocity = -0.05; // Slight upward-backwards jolt
+        player.velocity = 0.12; // BUG FIX: positive = upward jolt
         cameraShake(0.4, 0.3);
       } else {
         cameraShake(0.15, 0.2);
@@ -126,9 +128,24 @@ function _checkSpits() {
       if (!enemy.isDead && spit.box.intersectsBox(enemy.box)) {
         const dead = enemy.hit();
         if (dead) {
-          onEnemyKill(ENEMY_POINTS[enemy.type] ?? 2);
+          // BUG FIX: full kill feedback for spit (was missing VFX/text/shake)
+          spawnImpactVFX(enemy.group.position);
+          spawnParticles(enemy.group.position, 0x55ff00, 10);
+          cameraShake(0.12, 0.15);
+          const earned = onEnemyKill(ENEMY_POINTS[enemy.type] ?? 2);
           showHitFlash();
+          // Floating text
+          const vec = enemy.group.position.clone().project(camera);
+          const x = (vec.x + 1) * renderer.domElement.width  / 2;
+          const y = (-vec.y + 1) * renderer.domElement.height / 2;
+          const comboLabel = state.comboMultiplier > 1 ? ` (x${state.comboMultiplier})` : '';
+          showFloatingText(x, y, `+${earned}${comboLabel}`, '#55ff00');
           enemies.splice(j, 1);
+        } else {
+          // Tank survives — still show a hit effect
+          cameraShake(0.08, 0.1);
+          showHitFlash();
+          onEnemyKill(0); // update HUD combo timer but no points
         }
         hit = true;
         break;
@@ -139,7 +156,14 @@ function _checkSpits() {
     if (!hit) {
       for (let k = arrows.length - 1; k >= 0; k--) {
         if (spit.box.intersectsBox(arrows[k].box)) {
-          spawnParticles(arrows[k].group.position, 0x55ff00, 4);
+          // BUG FIX: reward arrow intercept with a flash + text
+          const arrowPos = arrows[k].group.position.clone();
+          spawnParticles(arrowPos, 0x55ff00, 4);
+          showHitFlash();
+          const vec = arrowPos.clone().project(camera);
+          const x = (vec.x + 1) * renderer.domElement.width  / 2;
+          const y = (-vec.y + 1) * renderer.domElement.height / 2;
+          showFloatingText(x, y, 'BLOCK!', '#55ff00');
           arrows[k].destroy();
           arrows.splice(k, 1);
           hit = true;
