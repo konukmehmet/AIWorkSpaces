@@ -5,8 +5,8 @@ import * as THREE from 'three';
 
 // ---- Core setup ----------------------------------------
 export const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d0d1a);
-scene.fog = new THREE.Fog(0x3d1b3d, 10, 60);
+scene.background = new THREE.Color(0x87ceeb); // light sky blue
+scene.fog = new THREE.Fog(0x87ceeb, 20, 80);
 
 export const camera = new THREE.PerspectiveCamera(
   75, window.innerWidth / window.innerHeight, 0.1, 1000
@@ -21,17 +21,17 @@ renderer.shadowMap.enabled = true;
 document.getElementById('app').appendChild(renderer.domElement);
 
 // ---- Lighting ------------------------------------------
-const ambientLight = new THREE.AmbientLight(0xffccaa, 0.5);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); // Bright daylight
 scene.add(ambientLight);
 
-const sunLight = new THREE.DirectionalLight(0xffaa00, 1.5);
-sunLight.position.set(10, 10, -10);
+const sunLight = new THREE.DirectionalLight(0xfff8e7, 1.2);
+sunLight.position.set(10, 15, 10); // Sun from above/side
 scene.add(sunLight);
 
-// Eerie purple rim light for drama
-const rimLight = new THREE.DirectionalLight(0x9933ff, 0.4);
-rimLight.position.set(-10, 5, 5);
-scene.add(rimLight);
+// Soft fill light
+const fillLight = new THREE.DirectionalLight(0xaaccff, 0.4);
+fillLight.position.set(-10, 5, -5);
+scene.add(fillLight);
 
 // ---- Particles -----------------------------------------
 export const particles = [];
@@ -83,19 +83,24 @@ export function updateParticles() {
 // ---- Background skyline --------------------------------
 function createSkyline() {
   const g = new THREE.Group();
-  for (let i = 0; i < 15; i++) {
-    const stoneMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e });
-    const domeGeo  = new THREE.SphereGeometry(2 + Math.random() * 2, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2);
-    const dome = new THREE.Mesh(domeGeo, stoneMat);
-    dome.position.set((Math.random() - 0.5) * 100, -10, -30 - Math.random() * 20);
+  for (let i = 0; i < 20; i++) {
+    // Generate trees/hills for the farm background
+    const leavesMat = new THREE.MeshStandardMaterial({ color: 0x2d8a2d, roughness: 0.9, flatShading: true });
+    const trunkMat  = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 1.0 });
+
+    const scale = 1 + Math.random() * 2;
+    // Tree top (leaves)
+    const domeGeo = new THREE.IcosahedronGeometry(2 * scale, 0);
+    const dome = new THREE.Mesh(domeGeo, leavesMat);
+    dome.position.set((Math.random() - 0.5) * 120, -5 + scale, -30 - Math.random() * 20);
     g.add(dome);
 
-    const minGeo = new THREE.CylinderGeometry(0.3, 0.3, 15, 8);
-    const min = new THREE.Mesh(minGeo, stoneMat);
-    min.position.copy(dome.position);
-    min.position.x += (Math.random() - 0.5) * 5;
-    min.position.y += 5;
-    g.add(min);
+    // Trunk
+    const trunkGeo = new THREE.CylinderGeometry(0.4 * scale, 0.6 * scale, 8 * scale, 5);
+    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+    trunk.position.copy(dome.position);
+    trunk.position.y -= 4 * scale;
+    g.add(trunk);
   }
   scene.add(g);
   return g;
