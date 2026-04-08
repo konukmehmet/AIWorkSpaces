@@ -13,7 +13,7 @@ import {
   showMenu, showPlaying, showGameOver,
   updateHUD, tickComboBar, triggerWaveFlash,
 } from './ui.js';
-import { initAudio, playGameOver } from './audio.js';
+import { initAudio, playGameOver, startBGM, stopBGM } from './audio.js';
 
 // ---- Player ------------------------------------------------
 const bird = new OttomanBird();
@@ -37,6 +37,7 @@ function startGame() {
   bird.reset();
   showPlaying();
   updateHUD();
+  startBGM();
 
   inputCooldownUntil = Date.now() + INPUT_COOLDOWN_MS;
 }
@@ -45,6 +46,7 @@ function endGame(reason) {
   if (state.phase === GameState.GAME_OVER) return;
   console.log('[Game Over]', reason);
   state.phase = GameState.GAME_OVER;
+  stopBGM();
   playGameOver();
 
   if (state.score > state.highScore) {

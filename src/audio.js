@@ -179,3 +179,83 @@ export function playGameOver() {
   osc.start();
   osc.stop(audioCtx.currentTime + 1.0);
 }
+
+// -------------------------------------------------------------
+// Effect: Background Music (Electric Piano Sequencer)
+// -------------------------------------------------------------
+let isBGMPlaying = false;
+let bgmInterval = null;
+let currentStep = 0;
+let nextNoteTime = 0;
+
+// Tempo and gallop melody (William Tell / Arcade style)
+const TEMPO = 140; 
+// 0 means rest
+const MELODY = [
+  261.63,      0, 261.63, 261.63, // C4 rest C4 C4
+  392.00,      0, 392.00, 392.00, // G4 rest G4 G4
+  349.23,      0, 349.23, 349.23, // F4 rest F4 F4
+  261.63, 311.13, 349.23, 392.00, // C4 Eb4 F4 G4 (Walk up)
+];
+
+function playPianoNote(freq, time) {
+  if (freq === 0) return; // Rest
+  
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  
+  // Triangle wave gives a soft, electric-piano/mallet texture
+  osc.type = 'triangle';
+  osc.frequency.value = freq;
+  
+  // Envelope: Sharp attack, exponential decay
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(0.2, time + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.25);
+  
+  osc.connect(gain);
+  gain.connect(masterGain);
+  
+  osc.start(time);
+  osc.stop(time + 0.3);
+}
+
+function scheduleBGM() {
+  if (!isBGMPlaying || !audioCtx) return;
+  
+  const lookahead = 25.0; // ms
+  const scheduleAheadTime = 0.1; // seconds
+  const secondsPerBeat = 60.0 / TEMPO;
+  // Each step is a 16th note (4 steps per beat)
+  const stepDuration = 0.25 * secondsPerBeat; 
+
+  while (nextNoteTime < audioCtx.currentTime + scheduleAheadTime) {
+    playPianoNote(MELODY[currentStep], nextNoteTime);
+    
+    // Advance logic
+    nextNoteTime += stepDuration;
+    currentStep++;
+    if (currentStep >= MELODY.length) {
+      currentStep = 0;
+    }
+  }
+  
+  bgmInterval = setTimeout(scheduleBGM, lookahead);
+}
+
+export function startBGM() {
+  if (!audioCtx) return;
+  resumeCtx();
+  if (isBGMPlaying) return;
+  
+  isBGMPlaying = true;
+  currentStep = 0;
+  nextNoteTime = audioCtx.currentTime + 0.05;
+  scheduleBGM();
+}
+
+export function stopBGM() {
+  isBGMPlaying = false;
+  clearTimeout(bgmInterval);
+}
+
