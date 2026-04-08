@@ -13,6 +13,7 @@ import {
   showMenu, showPlaying, showGameOver,
   updateHUD, tickComboBar, triggerWaveFlash,
 } from './ui.js';
+import { initAudio, playGameOver } from './audio.js';
 
 // ---- Player ------------------------------------------------
 const bird = new OttomanBird();
@@ -23,6 +24,7 @@ const INPUT_COOLDOWN_MS = 350;
 
 // ---- Game flow ---------------------------------------------
 function startGame() {
+  initAudio();
   resetState();
   resetLevel();
 
@@ -43,6 +45,7 @@ function endGame(reason) {
   if (state.phase === GameState.GAME_OVER) return;
   console.log('[Game Over]', reason);
   state.phase = GameState.GAME_OVER;
+  playGameOver();
 
   if (state.score > state.highScore) {
     state.highScore = state.score;

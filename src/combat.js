@@ -15,6 +15,7 @@ import {
   SCORE_DIVER_KILL,
   SCORE_TANK_KILL,
 } from './config.js';
+import { playHit } from './audio.js';
 
 const ENEMY_POINTS = {
   Archer: SCORE_ARCHER_KILL,
@@ -139,6 +140,7 @@ function _checkSpits() {
     if (!hit) {
       for (let k = arrows.length - 1; k >= 0; k--) {
         if (spit.box.intersectsBox(arrows[k].box)) {
+          playHit();
           spawnParticles(arrows[k].group.position, 0x55ff00, 4);
           arrows[k].destroy();
           arrows.splice(k, 1);
@@ -155,6 +157,7 @@ function _checkSpits() {
 // ---- Internals for juicy kills --------------------------
 
 function _handleKill(enemy) {
+  playHit();
   // 1. Effects
   spawnImpactVFX(enemy.group.position);
   spawnParticles(enemy.group.position, 0xffd700, 8);

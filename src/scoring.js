@@ -4,10 +4,12 @@
 import { state, registerKill } from './state.js';
 import { DIFFICULTY_TIERS, SCORE_PIPE_PASS } from './config.js';
 import { updateHUD } from './ui.js';
+import { playScore } from './audio.js';
 
 /** Called each time the player passes a pipe. */
 export function onPipePass() {
   state.score += SCORE_PIPE_PASS;
+  playScore();
   checkDifficultyScale();
   updateHUD();
 }
@@ -15,6 +17,7 @@ export function onPipePass() {
 /** Called each time an enemy dies. */
 export function onEnemyKill(basePoints) {
   const earned = registerKill(basePoints);
+  playScore();
   checkDifficultyScale();
   updateHUD();
   return earned;

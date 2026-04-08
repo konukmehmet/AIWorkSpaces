@@ -9,6 +9,7 @@ import {
   GROUND_Y, CEILING_Y, SPIT_COOLDOWN_MS,
 } from './config.js';
 import { GameState, state } from './state.js';
+import { playJump, playSwing, playSpit } from './audio.js';
 
 // ---- Projectiles (owned by player module) ---------------
 export const spits  = [];
@@ -201,6 +202,7 @@ export class OttomanBird {
   jump() {
     if (state.phase !== GameState.PLAYING) return;
     this.velocity = JUMP_STRENGTH;
+    playJump();
     gsap.to(this.leftWing.rotation,  { z: 0.6, duration: 0.1, yoyo: true, repeat: 1 });
     gsap.to(this.rightWing.rotation, { z: -0.6, duration: 0.1, yoyo: true, repeat: 1 });
   }
@@ -208,6 +210,7 @@ export class OttomanBird {
   swing() {
     if (state.phase !== GameState.PLAYING || this.isSwinging) return;
     this.isSwinging = true;
+    playSwing();
 
     // Glow effect on swing
     this.bladeMat.emissive.set(0xffd700);
@@ -233,6 +236,7 @@ export class OttomanBird {
     if (state.phase !== GameState.PLAYING) return;
     if (Date.now() - this.lastSpitTime < SPIT_COOLDOWN_MS) return;
     this.lastSpitTime = Date.now();
+    playSpit();
     const pos = new THREE.Vector3();
     this.horseGroup.getWorldPosition(pos);
     pos.y += 0.8;
